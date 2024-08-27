@@ -1,6 +1,8 @@
 use std::fs::read;
 
-pub mod made;
+
+mod lexer;
+mod parser;
 
 fn main() {
     let source = read("../example.ma").unwrap();

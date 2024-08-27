@@ -9,3 +9,4 @@ miette = { version = "7.2.0", features = ["fancy"] }
 serde = "1.0.208"
 serde_json = "1.0.125"
 thiserror = "1.0.63"
+paste = "1.0"
