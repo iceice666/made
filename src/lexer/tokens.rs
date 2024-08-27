@@ -14,7 +14,7 @@ pub(crate) enum TokenType {
     Dot,       // .
     Colon,     // :
     Semicolon, // ;
-    Backslash, // \
+    BackSlash, // \
     At,        // @
     Pipe,      // |
     Question,  // ?

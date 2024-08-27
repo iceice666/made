@@ -57,13 +57,17 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
             ',' => new_token!(TokenType::Comma),
             '.' => new_token!(TokenType::Dot),
             '+' => new_token!(TokenType::Plus),
-            '-' => new_token!(TokenType::Minus),
             ';' => new_token!(TokenType::Semicolon),
             '*' => new_token!(TokenType::Star),
             '/' => new_token!(TokenType::Slash),
             '@' => new_token!(TokenType::At),
             '|' => new_token!(TokenType::Pipe),
+            '\\' => new_token!(TokenType::BackSlash),
 
+            '-' => new_token! {
+                '>' => TokenType::MinusGreater,
+                _ => TokenType::Minus
+            },
             '=' => new_token! {
                 '=' => TokenType::EqualEqual,
                 '>' => TokenType::EqualGreater,
@@ -157,6 +161,7 @@ pub fn try_parse_keyword(keyword: &str) -> Option<TokenType> {
         "struct" => TokenType::Struct,
         "fn" => TokenType::Fn,
         "return" => TokenType::Return,
+        "let" => TokenType::Let,
         _ => return None,
     })
 }
