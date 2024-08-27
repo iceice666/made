@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum TokenType {
     // Punctuation
     LeftParen,   // (
@@ -16,6 +16,7 @@ pub(crate) enum TokenType {
     Semicolon, // ;
     Backslash, // \
     At,        // @
+    Pipe,      // |
 
     MinusGreater, // ->
     EqualGreater, // =>
@@ -35,9 +36,11 @@ pub(crate) enum TokenType {
     LessEqual,    // <=
 
     // Literals.
-    Identifier,
+    Identifier(String),
     String(String),
-    Number,
+    Char(char),
+    Integer(i64),
+    Float(f64),
     Comment(String),
 
     // Keywords.
@@ -66,8 +69,30 @@ pub(crate) enum TokenType {
 
     Eof,
 }
+impl TokenType {
+    pub fn try_parse_keyword(keyword: &str) -> Option<Self> {
+        Some(match keyword {
+            "and" => Self::And,
+            "or" => Self::Or,
+            "true" => Self::True,
+            "false" => Self::False,
+            "null" => Self::Null,
+            "if" => Self::If,
+            "else" => Self::Else,
+            "for" => Self::For,
+            "while" => Self::While,
+            "loop" => Self::Loop,
+            "break" => Self::Break,
+            "continue" => Self::Continue,
+            "struct" => Self::Struct,
+            "fn" => Self::Fn,
+            "return" => Self::Return,
+            _ => return None,
+        })
+    }
+}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct Token {
     r#type: TokenType,
     line: usize,
