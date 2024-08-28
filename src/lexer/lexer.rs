@@ -159,6 +159,9 @@ pub fn try_parse_keyword(keyword: &str) -> Option<TokenType> {
         "break" => TokenType::Break,
         "continue" => TokenType::Continue,
         "struct" => TokenType::Struct,
+        "impl" => TokenType::Impl,
+        "enum" => TokenType::Enum,
+        "typealias" => TokenType::TypeAlias,
         "fn" => TokenType::Fn,
         "return" => TokenType::Return,
         "let" => TokenType::Let,
@@ -194,7 +197,6 @@ fn try_parse_escaped_char(source: &mut SourceHolder) -> LexResult<TokenType> {
     }
 }
 
-
 fn try_parse_string(source: &mut SourceHolder) -> LexResult<TokenType> {
     while source.peek() != Some('"') {
         if source.peek().is_none() {
@@ -221,7 +223,7 @@ fn try_parse_number(source: &mut SourceHolder) -> LexResult<TokenType> {
             break;
         }
     }
-    let num_str = source.get_lexeme().replace("'", "");
+    let num_str = source.get_lexeme().replace('\'', "");
     if num_str.is_empty() {
         Err(LexicalError::HowDidYouGetHere(source.to_owned()))
     } else if float_flag {
@@ -326,20 +328,29 @@ mod tests {
     }
 
     #[test]
-    fn test_failable_cases() {
+    fn test_errors() {
         // Test for undetermined string literal
         let source = "\"This is an unterminated string";
         let result = tokenize(source);
-        assert!(matches!(result, Err(LexicalError::UndeterminedStringLiteral(_))));
+        assert!(matches!(
+            result,
+            Err(LexicalError::UndeterminedStringLiteral(_))
+        ));
 
         // Test for undetermined char literal
         let source = "'\\x";
         let result = tokenize(source);
-        assert!(matches!(result, Err(LexicalError::UndeterminedCharLiteral(_))));
+        assert!(matches!(
+            result,
+            Err(LexicalError::UndeterminedCharLiteral(_))
+        ));
 
         let source = "'\\\\n'";
         let result = tokenize(source);
-        assert!(matches!(result, Err(LexicalError::UndeterminedCharLiteral(_))));
+        assert!(matches!(
+            result,
+            Err(LexicalError::UndeterminedCharLiteral(_))
+        ));
 
         // Test for empty char literal
         let source = "''";
@@ -350,5 +361,732 @@ mod tests {
         let source = "123..456";
         let result = tokenize(source);
         assert!(matches!(result, Err(LexicalError::MalformedNumber(_))));
+    }
+
+    #[test]
+    fn test_keywords() {
+        let source =
+            "and or true false null if else for while loop break continue struct impl fn return \
+            let enum typealias";
+        let tokens = tokenize(source).unwrap();
+        let expected_tokens = vec![
+            Token::new(TokenType::And, 1, "and"),
+            Token::new(TokenType::Or, 1, "or"),
+            Token::new(TokenType::True, 1, "true"),
+            Token::new(TokenType::False, 1, "false"),
+            Token::new(TokenType::Null, 1, "null"),
+            Token::new(TokenType::If, 1, "if"),
+            Token::new(TokenType::Else, 1, "else"),
+            Token::new(TokenType::For, 1, "for"),
+            Token::new(TokenType::While, 1, "while"),
+            Token::new(TokenType::Loop, 1, "loop"),
+            Token::new(TokenType::Break, 1, "break"),
+            Token::new(TokenType::Continue, 1, "continue"),
+            Token::new(TokenType::Struct, 1, "struct"),
+            Token::new(TokenType::Impl, 1, "impl"),
+            Token::new(TokenType::Fn, 1, "fn"),
+            Token::new(TokenType::Return, 1, "return"),
+            Token::new(TokenType::Let, 1, "let"),
+            Token::new(TokenType::Enum, 1, "enum"),
+            Token::new(TokenType::TypeAlias, 1, "typealias"),
+        ];
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn test_large_source() {
+        use TokenType::*;
+        let source =
+r#"let integer = 123;
+let float = 114.514;
+let boolean = true;
+let string = "literal"
+
+print("hello world!");
+multi_arg_fn(1, 2, 3);
+
+if (true) {
+    print("true");
+} else {
+    print("false");
+}
+
+let array = [1, 2, 3];
+let tuple = (1, 2, 3);
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+let point = Point { x: 1, y: 2 };
+
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+let result = add(1, 2);
+
+return result;
+"#;
+        let tokens = tokenize(source).unwrap();
+        let expected_tokens =            vec![
+                Token {
+                    r#type: Let,
+                    line: 1,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("integer".to_string()),
+                    line: 1,
+                    lexeme: "integer".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 1,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: Integer(123),
+                    line: 1,
+                    lexeme: "123".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 1,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 2,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("float".to_string()),
+                    line: 2,
+                    lexeme: "float".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 2,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: Float(114.514),
+                    line: 2,
+                    lexeme: "114.514".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 2,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 3,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("boolean".to_string()),
+                    line: 3,
+                    lexeme: "boolean".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 3,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: True,
+                    line: 3,
+                    lexeme: "true".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 3,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 4,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("string".to_string()),
+                    line: 4,
+                    lexeme: "string".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 4,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: String("literal".to_string()),
+                    line: 4,
+                    lexeme: "\"literal\"".to_string(),
+                },
+                Token {
+                    r#type: Identifier("print".to_string()),
+                    line: 6,
+                    lexeme: "print".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 6,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: String("hello world!".to_string()),
+                    line: 6,
+                    lexeme: "\"hello world!\"".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 6,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 6,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Identifier("multi_arg_fn".to_string()),
+                    line: 7,
+                    lexeme: "multi_arg_fn".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 7,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: Integer(1),
+                    line: 7,
+                    lexeme: "1".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 7,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(2),
+                    line: 7,
+                    lexeme: "2".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 7,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(3),
+                    line: 7,
+                    lexeme: "3".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 7,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 7,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: If,
+                    line: 9,
+                    lexeme: "if".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 9,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: True,
+                    line: 9,
+                    lexeme: "true".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 9,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: LeftBrace,
+                    line: 9,
+                    lexeme: "{".to_string(),
+                },
+                Token {
+                    r#type: Identifier("print".to_string()),
+                    line: 10,
+                    lexeme: "print".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 10,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: String("true".to_string()),
+                    line: 10,
+                    lexeme: "\"true\"".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 10,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 10,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: RightBrace,
+                    line: 11,
+                    lexeme: "}".to_string(),
+                },
+                Token {
+                    r#type: Else,
+                    line: 11,
+                    lexeme: "else".to_string(),
+                },
+                Token {
+                    r#type: LeftBrace,
+                    line: 11,
+                    lexeme: "{".to_string(),
+                },
+                Token {
+                    r#type: Identifier("print".to_string()),
+                    line: 12,
+                    lexeme: "print".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 12,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: String("false".to_string()),
+                    line: 12,
+                    lexeme: "\"false\"".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 12,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 12,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: RightBrace,
+                    line: 13,
+                    lexeme: "}".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 15,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("array".to_string()),
+                    line: 15,
+                    lexeme: "array".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 15,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: LeftSquare,
+                    line: 15,
+                    lexeme: "[".to_string(),
+                },
+                Token {
+                    r#type: Integer(1),
+                    line: 15,
+                    lexeme: "1".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 15,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(2),
+                    line: 15,
+                    lexeme: "2".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 15,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(3),
+                    line: 15,
+                    lexeme: "3".to_string(),
+                },
+                Token {
+                    r#type: RightSquare,
+                    line: 15,
+                    lexeme: "]".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 15,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 16,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("tuple".to_string()),
+                    line: 16,
+                    lexeme: "tuple".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 16,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 16,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: Integer(1),
+                    line: 16,
+                    lexeme: "1".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 16,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(2),
+                    line: 16,
+                    lexeme: "2".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 16,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(3),
+                    line: 16,
+                    lexeme: "3".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 16,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 16,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Struct,
+                    line: 18,
+                    lexeme: "struct".to_string(),
+                },
+                Token {
+                    r#type: Identifier("Point".to_string()),
+                    line: 18,
+                    lexeme: "Point".to_string(),
+                },
+                Token {
+                    r#type: LeftBrace,
+                    line: 18,
+                    lexeme: "{".to_string(),
+                },
+                Token {
+                    r#type: Identifier("x".to_string()),
+                    line: 19,
+                    lexeme: "x".to_string(),
+                },
+                Token {
+                    r#type: Colon,
+                    line: 19,
+                    lexeme: ":".to_string(),
+                },
+                Token {
+                    r#type: Identifier("i32".to_string()),
+                    line: 19,
+                    lexeme: "i32".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 19,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Identifier("y".to_string()),
+                    line: 20,
+                    lexeme: "y".to_string(),
+                },
+                Token {
+                    r#type: Colon,
+                    line: 20,
+                    lexeme: ":".to_string(),
+                },
+                Token {
+                    r#type: Identifier("i32".to_string()),
+                    line: 20,
+                    lexeme: "i32".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 20,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: RightBrace,
+                    line: 21,
+                    lexeme: "}".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 23,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("point".to_string()),
+                    line: 23,
+                    lexeme: "point".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 23,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: Identifier("Point".to_string()),
+                    line: 23,
+                    lexeme: "Point".to_string(),
+                },
+                Token {
+                    r#type: LeftBrace,
+                    line: 23,
+                    lexeme: "{".to_string(),
+                },
+                Token {
+                    r#type: Identifier("x".to_string()),
+                    line: 23,
+                    lexeme: "x".to_string(),
+                },
+                Token {
+                    r#type: Colon,
+                    line: 23,
+                    lexeme: ":".to_string(),
+                },
+                Token {
+                    r#type: Integer(1),
+                    line: 23,
+                    lexeme: "1".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 23,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Identifier("y".to_string()),
+                    line: 23,
+                    lexeme: "y".to_string(),
+                },
+                Token {
+                    r#type: Colon,
+                    line: 23,
+                    lexeme: ":".to_string(),
+                },
+                Token {
+                    r#type: Integer(2),
+                    line: 23,
+                    lexeme: "2".to_string(),
+                },
+                Token {
+                    r#type: RightBrace,
+                    line: 23,
+                    lexeme: "}".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 23,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Fn,
+                    line: 25,
+                    lexeme: "fn".to_string(),
+                },
+                Token {
+                    r#type: Identifier("add".to_string()),
+                    line: 25,
+                    lexeme: "add".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 25,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: Identifier("a".to_string()),
+                    line: 25,
+                    lexeme: "a".to_string(),
+                },
+                Token {
+                    r#type: Colon,
+                    line: 25,
+                    lexeme: ":".to_string(),
+                },
+                Token {
+                    r#type: Identifier("i32".to_string()),
+                    line: 25,
+                    lexeme: "i32".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 25,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Identifier("b".to_string()),
+                    line: 25,
+                    lexeme: "b".to_string(),
+                },
+                Token {
+                    r#type: Colon,
+                    line: 25,
+                    lexeme: ":".to_string(),
+                },
+                Token {
+                    r#type: Identifier("i32".to_string()),
+                    line: 25,
+                    lexeme: "i32".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 25,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: MinusGreater,
+                    line: 25,
+                    lexeme: "->".to_string(),
+                },
+                Token {
+                    r#type: Identifier("i32".to_string()),
+                    line: 25,
+                    lexeme: "i32".to_string(),
+                },
+                Token {
+                    r#type: LeftBrace,
+                    line: 25,
+                    lexeme: "{".to_string(),
+                },
+                Token {
+                    r#type: Identifier("a".to_string()),
+                    line: 26,
+                    lexeme: "a".to_string(),
+                },
+                Token {
+                    r#type: Plus,
+                    line: 26,
+                    lexeme: "+".to_string(),
+                },
+                Token {
+                    r#type: Identifier("b".to_string()),
+                    line: 26,
+                    lexeme: "b".to_string(),
+                },
+                Token {
+                    r#type: RightBrace,
+                    line: 27,
+                    lexeme: "}".to_string(),
+                },
+                Token {
+                    r#type: Let,
+                    line: 29,
+                    lexeme: "let".to_string(),
+                },
+                Token {
+                    r#type: Identifier("result".to_string()),
+                    line: 29,
+                    lexeme: "result".to_string(),
+                },
+                Token {
+                    r#type: Equal,
+                    line: 29,
+                    lexeme: "=".to_string(),
+                },
+                Token {
+                    r#type: Identifier("add".to_string()),
+                    line: 29,
+                    lexeme: "add".to_string(),
+                },
+                Token {
+                    r#type: LeftParen,
+                    line: 29,
+                    lexeme: "(".to_string(),
+                },
+                Token {
+                    r#type: Integer(1),
+                    line: 29,
+                    lexeme: "1".to_string(),
+                },
+                Token {
+                    r#type: Comma,
+                    line: 29,
+                    lexeme: ",".to_string(),
+                },
+                Token {
+                    r#type: Integer(2),
+                    line: 29,
+                    lexeme: "2".to_string(),
+                },
+                Token {
+                    r#type: RightParen,
+                    line: 29,
+                    lexeme: ")".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 29,
+                    lexeme: ";".to_string(),
+                },
+                Token {
+                    r#type: Return,
+                    line: 31,
+                    lexeme: "return".to_string(),
+                },
+                Token {
+                    r#type: Identifier("result".to_string()),
+                    line: 31,
+                    lexeme: "result".to_string(),
+                },
+                Token {
+                    r#type: Semicolon,
+                    line: 31,
+                    lexeme: ";".to_string(),
+                },
+            ];
+        assert_eq!(tokens, expected_tokens);
     }
 }

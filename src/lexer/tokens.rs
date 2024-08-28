@@ -61,6 +61,9 @@ pub(crate) enum TokenType {
     Continue, // continue
 
     Struct, // struct
+    Impl,   // impl
+    Enum,   // enum
+    TypeAlias,   // typealias
     Fn,     // fn
     Return, // return
 
@@ -70,9 +73,9 @@ pub(crate) enum TokenType {
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Token {
-    r#type: TokenType,
-    line: usize,
-    lexeme: String,
+    pub(crate)  r#type: TokenType,
+    pub(crate) line: usize,
+    pub(crate) lexeme: String,
 }
 
 impl Token {
