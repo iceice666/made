@@ -49,7 +49,6 @@ pub(crate) enum TokenType {
     True,  // true
     False, // false
 
-    Null, // null
 
     If,   // if
     Else, // else
