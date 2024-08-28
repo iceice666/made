@@ -294,7 +294,7 @@ mod tests {
         ];
         assert_eq!(tokens, expected_tokens);
 
-        let source = "identifier keyword true false";
+        let source = "identifier keyword true false not";
         let tokens = tokenize(source).unwrap();
         let expected_tokens = vec![
             Token::new(
@@ -305,6 +305,7 @@ mod tests {
             Token::new(TokenType::Identifier("keyword".to_string()), 1, "keyword"),
             Token::new(TokenType::True, 1, "true"),
             Token::new(TokenType::False, 1, "false"),
+            Token::new(TokenType::Not, 1, "not"),
         ];
         assert_eq!(tokens, expected_tokens);
 

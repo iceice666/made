@@ -51,6 +51,7 @@ pub(crate) enum TokenType {
 
     True,  // true
     False, // false
+    Not,   // not
 
     If,   // if
     Else, // else
@@ -118,6 +119,7 @@ impl Display for TokenType {
 
             TokenType::True => write!(f, "true"),
             TokenType::False => write!(f, "false"),
+            TokenType::Not => write!(f, "not"),
 
             TokenType::If => write!(f, "if"),
             TokenType::Else => write!(f, "else"),
@@ -155,7 +157,7 @@ impl Token {
             lexeme: lexeme.into(),
         }
     }
-    
+
     pub fn new_with_type(r#type: TokenType) -> Self {
         Self {
             r#type,
@@ -164,5 +166,3 @@ impl Token {
         }
     }
 }
-
-

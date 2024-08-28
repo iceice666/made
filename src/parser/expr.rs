@@ -2,9 +2,13 @@ use crate::lexer::tokens::Token;
 
 // grammar
 //
-//  Boolean -> "true" | "false"
+//  True -> "true"
+//  False -> "false"
+//  Not -> "not"
+//
+//  Boolean -> True | False
 //  Literal -> Integer | Float | String | Boolean
-//  Unary -> ( "-" | "!" ) Expression
+//  Unary -> ( Not | "-" ) Expression
 //  Binary -> Expression Operator Expression
 //  Grouping -> "(" Expression ")"
 //  Variable -> Identifier
@@ -49,7 +53,7 @@ macro_rules! define_expr {
    } };
 }
 
-define_expr!(
+define_expr! {
     Boolean { value: bool },
     Integer { value: i64 },
     Float { value: f64 },
@@ -63,7 +67,7 @@ define_expr!(
     Get { object: Box<Expr>, name: String },
     Set { object: Box<Expr>, name: String, value: Box<Expr> },
     Let { name: String, value: Box<Expr>, ty: Option<String> }
-);
+}
 
 struct AstPrinter;
 
@@ -275,10 +279,10 @@ mod tests {
         assert_eq!(printer.visit_unary(&expr), "(- 5)".to_string());
 
         let expr = Expr::Unary {
-            operator: Token::new_with_type(Bang),
+            operator: Token::new_with_type(Not),
             right: Box::new(Expr::Boolean { value: true }),
         };
-        assert_eq!(printer.visit_unary(&expr), "(! true)".to_string());
+        assert_eq!(printer.visit_unary(&expr), "(not true)".to_string());
     }
 
     #[test]
