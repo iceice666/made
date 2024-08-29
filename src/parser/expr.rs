@@ -1,3 +1,4 @@
+use crate::define_grammar;
 use crate::lexer::tokens::Token;
 
 // grammar
@@ -10,50 +11,18 @@ use crate::lexer::tokens::Token;
 //  Literal -> Integer | Float | String | Boolean
 //  Unary -> ( Not | "-" ) Expression
 //  Binary -> Expression Operator Expression
-//  Grouping -> "(" Expression ")"
 //  Variable -> Identifier
-//  Assignment -> Identifier "=" Expression
 //  Call -> Expression "(" [Expression ("," Expression)*] ")"
 //  Get -> Expression "." Identifier
+//
+//  Grouping -> "(" Expression ")"
+//  Assignment -> Identifier "=" Expression
 //  Set -> Expression "." Identifier "=" Expression
 //  Let -> "let" Identifier (":" Type)? "=" Expression
 //  Expression -> Literal | Variable | Assignment | Unary | Binary | Grouping | Call | Get | Set | Let
 
-macro_rules! define_expr {
-    (
-        $(
-            $name:ident {
-                $( $field:ident : $type:ty ),* $(,)?
-            }
-        ),* $(,)?
-    ) => {  paste::paste!  {
-        #[derive(Debug)]
-        enum Expr {
-            $(
-                $name { $( $field : $type ),* },
-            )*
-        }
-
-        impl Expr {
-            fn accept<R>(&self, visitor: &mut dyn Visitor<R>) -> R {
-                match self {
-                    $(
-                        Expr::$name { .. } => visitor.[<visit_$name:snake>](self),
-                    )*
-                }
-            }
-        }
-
-        trait Visitor<R> {
-            $(
-                fn [<visit_$name:snake>](&mut self, expr: &Expr) -> R;
-            )*
-        }
-
-   } };
-}
-
-define_expr! {
+define_grammar! {
+    Expr =>
     Boolean { value: bool },
     Integer { value: i64 },
     Float { value: f64 },
@@ -71,7 +40,7 @@ define_expr! {
 
 struct AstPrinter;
 
-impl Visitor<String> for AstPrinter {
+impl Visitor<Expr, String> for AstPrinter {
     fn visit_boolean(&mut self, expr: &Expr) -> String {
         match expr {
             Expr::Boolean { value } => {

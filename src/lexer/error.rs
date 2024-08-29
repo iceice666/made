@@ -1,5 +1,6 @@
 use super::source::SourceHolder;
 use miette::{Diagnostic, SourceSpan};
+use std::error::Error;
 use thiserror::Error;
 
 pub(crate) type LexResult<T> = Result<T, LexicalError>;
@@ -7,7 +8,7 @@ pub(crate) type LexResult<T> = Result<T, LexicalError>;
 type Source = SourceHolder;
 
 #[derive(Error, Debug, Diagnostic)]
-pub enum LexicalError {
+pub(crate) enum LexicalError {
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
@@ -36,12 +37,6 @@ pub enum LexicalError {
     Nop,
 
     #[error("Reached end of file")]
-    #[diagnostic(code(made::lexer::error::eof))]
     Eof(Source),
 }
 
-impl LexicalError {
-    pub fn print_error(&self) {
-        println!("{:#?}", self);
-    }
-}
