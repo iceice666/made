@@ -61,8 +61,18 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
             '*' => new_token!(TokenType::Star),
             '/' => new_token!(TokenType::Slash),
             '@' => new_token!(TokenType::At),
-            '|' => new_token!(TokenType::Pipe),
             '\\' => new_token!(TokenType::BackSlash),
+            '^' => new_token!(TokenType::Caret),
+            '%' => new_token!(TokenType::Percent),
+
+            '|' => new_token! {
+                '|' => TokenType::PipePipe,
+                _ => TokenType::Pipe
+            },
+            '&' => new_token! {
+                '&' => TokenType::AmpersandAmpersand,
+                _ => TokenType::Ampersand
+            },
 
             '-' => new_token! {
                 '>' => TokenType::MinusGreater,
@@ -150,6 +160,8 @@ pub fn try_parse_keyword(keyword: &str) -> Option<TokenType> {
         "or" => TokenType::Or,
         "true" => TokenType::True,
         "false" => TokenType::False,
+        "not" => TokenType::Not,
+        "in" => TokenType::In,
         "if" => TokenType::If,
         "else" => TokenType::Else,
         "for" => TokenType::For,
@@ -161,7 +173,7 @@ pub fn try_parse_keyword(keyword: &str) -> Option<TokenType> {
         "impl" => TokenType::Impl,
         "enum" => TokenType::Enum,
         "typealias" => TokenType::TypeAlias,
-        "fn" => TokenType::Fn,
+        "func" => TokenType::Func,
         "return" => TokenType::Return,
         "let" => TokenType::Let,
         _ => return None,
@@ -365,7 +377,7 @@ mod tests {
     #[test]
     fn test_keywords() {
         let source =
-            "and or true false if else for while loop break continue struct impl fn return \
+            "and or true false if else for in while loop break continue struct impl func return \
             let enum typealias";
         let tokens = tokenize(source).unwrap();
         let expected_tokens = vec![
@@ -376,13 +388,14 @@ mod tests {
             Token::new(TokenType::If, 1, "if"),
             Token::new(TokenType::Else, 1, "else"),
             Token::new(TokenType::For, 1, "for"),
+            Token::new(TokenType::In, 1, "in"),
             Token::new(TokenType::While, 1, "while"),
             Token::new(TokenType::Loop, 1, "loop"),
             Token::new(TokenType::Break, 1, "break"),
             Token::new(TokenType::Continue, 1, "continue"),
             Token::new(TokenType::Struct, 1, "struct"),
             Token::new(TokenType::Impl, 1, "impl"),
-            Token::new(TokenType::Fn, 1, "fn"),
+            Token::new(TokenType::Func, 1, "func"),
             Token::new(TokenType::Return, 1, "return"),
             Token::new(TokenType::Let, 1, "let"),
             Token::new(TokenType::Enum, 1, "enum"),
@@ -408,8 +421,8 @@ if (true) {
     print("false");
 }
 
-let array = [1, 2, 3];
-let tuple = (1, 2, 3);
+let array = @array (1, 2, 3);
+let tuple = @tuple (1, 2, 3);
 
 struct Point {
     x: i32,
@@ -418,7 +431,7 @@ struct Point {
 
 let point = Point { x: 1, y: 2 };
 
-fn add(a: i32, b: i32) -> i32 {
+func add(a: i32, b: i32) -> i32 {
     a + b
 }
 
@@ -704,9 +717,19 @@ return result;
                 lexeme: "=".to_string(),
             },
             Token {
-                r#type: LeftSquare,
+                r#type: At,
                 line: 15,
-                lexeme: "[".to_string(),
+                lexeme: "@".to_string(),
+            },
+            Token {
+                r#type: Identifier("array".to_string()),
+                line: 15,
+                lexeme: "array".to_string()
+            },
+            Token {
+                r#type: LeftParen,
+                line: 15,
+                lexeme: "(".to_string()
             },
             Token {
                 r#type: Integer(1),
@@ -734,9 +757,9 @@ return result;
                 lexeme: "3".to_string(),
             },
             Token {
-                r#type: RightSquare,
+                r#type: RightParen,
                 line: 15,
-                lexeme: "]".to_string(),
+                lexeme: ")".to_string(),
             },
             Token {
                 r#type: Semicolon,
@@ -757,6 +780,16 @@ return result;
                 r#type: Equal,
                 line: 16,
                 lexeme: "=".to_string(),
+            },
+            Token {
+                r#type: At,
+                line: 16,
+                lexeme: "@".to_string(),
+            },
+            Token {
+                r#type: Identifier("tuple".to_string()),
+                line: 16,
+                lexeme: "tuple".to_string()
             },
             Token {
                 r#type: LeftParen,
@@ -929,9 +962,9 @@ return result;
                 lexeme: ";".to_string(),
             },
             Token {
-                r#type: Fn,
+                r#type: Func,
                 line: 25,
-                lexeme: "fn".to_string(),
+                lexeme: "func".to_string(),
             },
             Token {
                 r#type: Identifier("add".to_string()),

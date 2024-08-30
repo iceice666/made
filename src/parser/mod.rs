@@ -1,7 +1,4 @@
-mod expr;
-
-
-
+mod grammar;
 
 #[macro_export]
 macro_rules! define_grammar {
@@ -13,7 +10,7 @@ macro_rules! define_grammar {
             }
         ),* $(,)?
     ) => {paste::paste! {
-        
+
         #[derive(Debug)]
         enum $grammar_name {
             $(
@@ -30,13 +27,13 @@ macro_rules! define_grammar {
                 }
             }
         }
-        
+
 
         trait Visitor<T, R> {
             $(
                 fn [<visit_$name:snake>](&mut self, t: &T) -> R;
             )*
         }
-        
+
     }};
 }
