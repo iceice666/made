@@ -1,11 +1,9 @@
-use super::source::SourceHolder;
-use miette::{Diagnostic, SourceSpan};
-use std::error::Error;
+use crate::lexer::source::Source;
+use miette::Diagnostic;
 use thiserror::Error;
 
 pub(crate) type LexResult<T> = Result<T, LexicalError>;
 
-type Source = SourceHolder;
 
 #[derive(Error, Debug, Diagnostic)]
 pub(crate) enum LexicalError {

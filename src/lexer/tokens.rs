@@ -1,4 +1,3 @@
-
 #[derive(Debug, PartialEq)]
 pub(crate) enum TokenType {
     // Punctuation
@@ -37,7 +36,7 @@ pub(crate) enum TokenType {
     EqualEqual,   // ==
     GreaterEqual, // >=
     LessEqual,    // <=
-    
+
     PipePipe, // ||
     AmpersandAmpersand, // &&
 
@@ -71,7 +70,7 @@ pub(crate) enum TokenType {
     Impl,      // impl
     Enum,      // enum
     TypeAlias, // typealias
-    Func,        // func
+    Func,      // func
     Return,    // return
 
     Let, // let

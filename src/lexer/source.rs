@@ -1,14 +1,14 @@
 #[derive(Debug, Clone)]
-pub struct SourceHolder {
+pub struct Source {
     source: String,
     pub start: usize,
     pub current: usize,
     pub line: usize,
 }
 
-impl SourceHolder {
+impl Source {
     pub fn new(source: String) -> Self {
-        SourceHolder {
+        Source {
             source,
             start: 0,
             current: 0,
@@ -20,7 +20,7 @@ impl SourceHolder {
         &self.source[self.start..self.current]
     }
 
-    pub fn reset_start(&mut self) {
+    pub fn reset(&mut self) {
         self.start = self.current
     }
 
@@ -34,6 +34,10 @@ impl SourceHolder {
 
         Some(ch)
     }
+    
+    pub fn consume(&mut self) {
+        self.advance();
+    }
 
     pub fn peek(&mut self) -> Option<char> {
         self.source.chars().nth(self.current)
@@ -44,8 +48,3 @@ impl SourceHolder {
     }
 }
 
-impl Into<SourceHolder> for &SourceHolder {
-    fn into(self) -> SourceHolder {
-        self.to_owned()
-    }
-}

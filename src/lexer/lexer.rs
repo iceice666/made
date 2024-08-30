@@ -1,19 +1,20 @@
 use super::{
     error::{LexResult, LexicalError},
-    source::SourceHolder,
+    source::Source,
     tokens::{Token, TokenType},
 };
 
-fn generate_token(tt: TokenType, source: &SourceHolder) -> Token {
+
+fn generate_token(tt: TokenType, source: &mut Source) -> Token {
     let line = source.line;
-    let lexeme = source.get_lexeme().to_string();
+    let lexeme = source.get_lexeme();
     Token::new(tt, line, lexeme)
 }
 
-fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
+fn scan_token(source: &mut Source) -> LexResult<Token> {
     macro_rules! new_token {
         ($tt:expr) => {
-            generate_token($tt, & source)
+            generate_token($tt,  source)
         };
 
         (
@@ -25,12 +26,12 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
             match source.peek() {
                 $(
                     Some($expected) => {
-                        source.advance(); // Advance the iter
-                        let token = generate_token($value, & source);
+                        source.comsume(); // Advance the iter
+                        let token = generate_token($value, source);
                         token
                     },
                 )*
-                _ => generate_token($default, & source)
+                _ => generate_token($default,  source)
             }
         }
     }
@@ -90,7 +91,7 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
 
             '#' => {
                 while source.peek() != Some('\n') && source.peek().is_some() {
-                    source.advance();
+                    source.consume();
                 }
                 let comment = source.get_lexeme().trim_start_matches('#').to_string();
                 new_token!(TokenType::Comment(comment))
@@ -104,7 +105,7 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
 
             '"' => {
                 let tt = try_parse_string(source)?;
-                source.advance(); // Closing "
+                source.consume(); // Closing "
                 new_token!(tt)
             }
 
@@ -118,7 +119,7 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
             _ => {
                 while let Some(ch) = source.peek() {
                     if ch.is_alphanumeric() || ch == '_' {
-                        source.advance();
+                        source.consume();
                     } else {
                         break;
                     }
@@ -139,10 +140,10 @@ fn scan_token(source: &mut SourceHolder) -> LexResult<Token> {
 
 pub(crate) fn tokenize(source: impl Into<String>) -> LexResult<Vec<Token>> {
     let mut tokens = Vec::new();
-    let mut source = SourceHolder::new(source.into());
+    let mut source = Source::new(source.into());
 
     while source.has_next() {
-        source.reset_start();
+        source.reset();
         let token = scan_token(&mut source);
         match token {
             Ok(token) => tokens.push(token),
@@ -180,7 +181,7 @@ pub fn try_parse_keyword(keyword: &str) -> Option<TokenType> {
     })
 }
 
-fn try_parse_escaped_char(source: &mut SourceHolder) -> LexResult<TokenType> {
+fn try_parse_escaped_char(source: &mut Source) -> LexResult<TokenType> {
     let res = match source.advance() {
         Some(first_ch) => {
             let ch = match first_ch {
@@ -208,25 +209,25 @@ fn try_parse_escaped_char(source: &mut SourceHolder) -> LexResult<TokenType> {
     }
 }
 
-fn try_parse_string(source: &mut SourceHolder) -> LexResult<TokenType> {
+fn try_parse_string(source: &mut Source) -> LexResult<TokenType> {
     while source.peek() != Some('"') {
         if source.peek().is_none() {
             return Err(LexicalError::UndeterminedStringLiteral(source.to_owned()));
         }
-        source.advance();
+        source.consume();
     }
     let value = source.get_lexeme();
     let value = value.trim_start_matches('"').trim_end_matches('"');
     Ok(TokenType::String(value.to_string()))
 }
 
-fn try_parse_number(source: &mut SourceHolder) -> LexResult<TokenType> {
+fn try_parse_number(source: &mut Source) -> LexResult<TokenType> {
     let mut float_flag = false;
     while let Some(ch) = source.peek() {
         if ch.is_ascii_digit() || ch == '\'' {
-            source.advance();
+            source.consume();
         } else if !float_flag && ch == '.' {
-            source.advance();
+            source.consume();
             float_flag = true;
         } else if float_flag && ch == '.' {
             return Err(LexicalError::MalformedNumber(source.to_owned()));
@@ -724,12 +725,12 @@ return result;
             Token {
                 r#type: Identifier("array".to_string()),
                 line: 15,
-                lexeme: "array".to_string()
+                lexeme: "array".to_string(),
             },
             Token {
                 r#type: LeftParen,
                 line: 15,
-                lexeme: "(".to_string()
+                lexeme: "(".to_string(),
             },
             Token {
                 r#type: Integer(1),
@@ -789,7 +790,7 @@ return result;
             Token {
                 r#type: Identifier("tuple".to_string()),
                 line: 16,
-                lexeme: "tuple".to_string()
+                lexeme: "tuple".to_string(),
             },
             Token {
                 r#type: LeftParen,

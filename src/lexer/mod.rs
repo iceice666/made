@@ -1,6 +1,7 @@
 pub(crate) mod error;
-mod source;
 mod lexer;
+mod source;
+mod tokens;
 
-pub(crate) mod tokens;
 pub(crate) use lexer::tokenize;
+pub(crate) use tokens::*;
