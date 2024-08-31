@@ -26,7 +26,7 @@ fn scan_token(source: &mut Source) -> LexResult<Token> {
             match source.peek() {
                 $(
                     Some($expected) => {
-                        source.comsume(); // Advance the iter
+                        source.consume(); // Advance the iter
                         let token = generate_token($value, source);
                         token
                     },
