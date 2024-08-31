@@ -104,15 +104,6 @@
 use std::fmt::Display;
 use either::Either;
 
-pub enum AstNode {
-    Program(Program),
-    Block(Block),
-    Statement(Statement),
-    Expression(Expression),
-    Type(Type),
-    // Add other base types here as needed
-}
-
 pub(crate) type Program = Vec<Statement>;
 
 pub(crate) type Block = Vec<Statement>;

@@ -1,18 +1,7 @@
-use super::nodes::*;
+use super::ast_nodes::*;
 use crate::parser::Resolver;
 use either::Either;
 
-impl Resolver<String> for AstNode {
-    fn resolve(&mut self) -> String {
-        match self {
-            AstNode::Program(program) => program.resolve(),
-            AstNode::Block(block) => block.resolve(),
-            AstNode::Statement(statement) => statement.resolve(),
-            AstNode::Expression(expression) => expression.resolve(),
-            AstNode::Type(type_) => type_.resolve(),
-        }
-    }
-}
 
 impl Resolver<String> for Vec<Statement> {
     fn resolve(&mut self) -> String {
@@ -145,10 +134,7 @@ impl Resolver<String> for IfExpression {
 
 impl Resolver<String> for Either<IfExpression, Vec<Statement>> {
     fn resolve(&mut self) -> String {
-        match self {
-            Either::Left(if_expr) => if_expr.resolve(),
-            Either::Right(statements) => statements.resolve(),
-        }
+        either::for_both!(self, s => s.resolve())
     }
 }
 
