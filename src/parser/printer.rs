@@ -2,7 +2,6 @@ use super::ast_nodes::*;
 use crate::parser::Resolver;
 use either::Either;
 
-
 impl Resolver<String> for Vec<Statement> {
     fn resolve(&mut self) -> String {
         self.iter_mut()
@@ -207,7 +206,7 @@ impl Resolver<String> for ReturnStatement {
 
 impl Resolver<String> for AssignmentStatement {
     fn resolve(&mut self) -> String {
-        format!("{} = {};", self.name, self.value.resolve())
+        format!("{} = {};", self.target.resolve(), self.value.resolve())
     }
 }
 

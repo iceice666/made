@@ -1,25 +1,43 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenType};
 use std::collections::VecDeque;
+
+use super::error::{ParseError, ParseResult};
 
 #[derive(Debug)]
 pub(crate) struct Source {
-    source: VecDeque<Token>,
+    tokens: VecDeque<Token>,
 }
 
 impl Source {
-    fn advance(&mut self) -> Option<Token> {
-        self.source.pop_front()
+    pub fn new(tokens: Vec<Token>) -> Self {
+        Self {
+            tokens: tokens.into(),
+        }
     }
 
-    fn peek(&mut self) -> Option<&Token> {
-        self.source.front()
+    pub(crate) fn advance(&mut self) -> Option<Token> {
+        self.tokens.pop_front()
     }
 
-    fn consume(&mut self) {
-        self.advance();
+    pub(crate) fn peek(&self) -> Option<&Token> {
+        self.tokens.front()
     }
 
-    fn has_next(&mut self) -> bool {
-        !self.source.is_empty()
+    pub(crate) fn check(&self, token_type: TokenType) -> bool {
+        match self.peek() {
+            Some(token) => matches!(&token.r#type, token_type),
+            None => false,
+        }
+    }
+
+    pub(crate) fn consume(&mut self) -> ParseResult<()> {
+        match self.advance() {
+            Some(_) => Ok(()),
+            None => Err(ParseError::UnexpectedEOF),
+        }
+    }
+
+    pub(crate) fn has_next(&self) -> bool {
+        !self.tokens.is_empty()
     }
 }

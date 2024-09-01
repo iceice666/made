@@ -45,7 +45,7 @@
 //! impl_declaration -> "impl" ( trait "for" )? type "{" named_function_declaration* "}"
 //! trait -> type
 //!
-//! assignment_statement -> IDENTIFIER "=" expression ";"
+//! assignment_statement -> field_access_expression "=" expression ";"
 //!
 //! expression -> if_expression
 //!             | match_expression
@@ -101,8 +101,10 @@
 //! WHITESPACE -> regex("\s+") -> skip
 //! COMMENT -> regex("#.*") -> skip
 
-use std::fmt::Display;
+use crate::lexer;
+use crate::parser::error::ParseError;
 use either::Either;
+use std::fmt::Display;
 
 pub(crate) type Program = Vec<Statement>;
 
@@ -179,7 +181,7 @@ pub(crate) struct ReturnStatement {
 }
 
 pub(crate) struct AssignmentStatement {
-    pub(crate) name: Identifier,
+    pub(crate) target: FieldAccessExpression,
     pub(crate) value: Expression,
 }
 pub(crate) enum Expression {
@@ -258,8 +260,8 @@ pub(crate) struct FunctionCallExpression {
 }
 
 pub(crate) struct FieldAccessExpression {
-    pub(crate) base: Box<PrimaryExpression>,
-    pub(crate) field: String,
+    pub(crate) base: Option<Box<PrimaryExpression>>,
+    pub(crate) field: Identifier,
 }
 
 pub(crate) enum Literal {
@@ -322,3 +324,20 @@ impl Display for Literal {
         write!(f, "{}", str)
     }
 }
+
+impl TryFrom<lexer::Token> for Literal {
+    type Error = ParseError;
+
+    fn try_from(value: lexer::Token) -> Result<Self, Self::Error> {
+        match value.r#type {
+            lexer::TokenType::True => Ok(Literal::Boolean(true)),
+            lexer::TokenType::False => Ok(Literal::Boolean(false)),
+            lexer::TokenType::Integer(i) => Ok(Literal::Integer(i)),
+            lexer::TokenType::Float(f) => Ok(Literal::Float(f)),
+            lexer::TokenType::Char(c) => Ok(Literal::Char(c)),
+            lexer::TokenType::String(s) => Ok(Literal::String(s)),
+            _ => Err(ParseError::UnexpectedToken(value)),
+        }
+    }
+}
+
