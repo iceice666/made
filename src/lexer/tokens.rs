@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq)]
+use std::fmt::Display;
+
+#[derive(Debug, PartialEq, strum_macros::Display)]
 pub(crate) enum TokenType {
     // Punctuation
     LeftParen,   // (
@@ -70,10 +72,12 @@ pub(crate) enum TokenType {
     Impl,      // impl
     Enum,      // enum
     TypeAlias, // typealias
+    Trait,     // trait
     Func,      // func
     Return,    // return
 
     Let, // let
+    
 }
 
 
@@ -91,5 +95,11 @@ impl Token {
             line,
             lexeme: lexeme.into(),
         }
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.r#type, self.lexeme)
     }
 }

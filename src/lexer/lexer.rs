@@ -173,6 +173,7 @@ pub fn try_parse_keyword(keyword: &str) -> Option<TokenType> {
         "struct" => TokenType::Struct,
         "impl" => TokenType::Impl,
         "enum" => TokenType::Enum,
+        "trait" => TokenType::Trait,
         "typealias" => TokenType::TypeAlias,
         "func" => TokenType::Func,
         "return" => TokenType::Return,
